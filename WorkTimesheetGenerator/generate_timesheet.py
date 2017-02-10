@@ -1,9 +1,29 @@
 import json
 import datetime
 import xlsxwriter
+import argparse
 
-# google history json file
-with open('GoogleLocationHistory.json') as data_file:
+parser = argparse.ArgumentParser()
+parser.add_argument("-i")
+parser.add_argument("-o", required=False, default='Timesheet.xlsx')
+
+parser.add_argument('-lat', action='append', dest='latitudes', default=[], help='Add repeated values to a list', required=False )
+parser.add_argument('-long', action='append', dest='longitudes', default=[], help='Add repeated values to a list', required=False )
+
+args = parser.parse_args()
+
+# replace with location coordinates of your choice
+latitudes = args.latitudes
+longitudes = args.longitudes
+input_file = args.i # google history json file
+output_file = args.o # output excel file
+
+if len(latitudes)==0 :
+	latitudes = ['4942','4941']
+if len(longitudes)==0 :
+	longitudes = ['867']
+
+with open(input_file) as data_file:
     data = json.load(data_file)
 
 locations = data['locations']
@@ -16,7 +36,7 @@ last_work_date_begin = None
 last_month = None
 check_dates = []
 
-workbook = xlsxwriter.Workbook('Timesheet.xlsx')
+workbook = xlsxwriter.Workbook(output_file)
 bold = workbook.add_format({'bold': True})
 worksheet = None
 row = 0
@@ -24,8 +44,8 @@ sum = 0
 
 for loc in locations:
     time = int(loc['timestampMs'])
-    latitude = int(loc['latitudeE7']) / 100000
-    longitute = int(loc['longitudeE7']) / 100000
+    latitude = str(int(loc['latitudeE7']) / 100000)
+    longitute = str(int(loc['longitudeE7']) / 100000)
 
     date = datetime.datetime.fromtimestamp(time / 1e3)
     if date.year < 2016 or date.month < 10 :
@@ -34,8 +54,7 @@ for loc in locations:
     if last_date is not None:
         timediff = (last_date - date).total_seconds()
 
-		# replace with location coordinates of your choice
-        if (latitude == 4942 or latitude == 4941) and longitute == 867 and last_date.day == date.day:
+        if latitude in latitudes and longitute in longitudes and last_date.day == date.day:
 
             if timediff > 0:
                 worktime += timediff
