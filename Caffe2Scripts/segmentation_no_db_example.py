@@ -165,8 +165,8 @@ def load_net(INIT_NET, PREDICT_NET, device_opts):
         net_def.device_option.CopyFrom(device_opts)
         workspace.CreateNet(net_def.SerializeToString(), overwrite=True)
 
-INIT_NET = '/home/neher/Projects/caffe2_networks/init_net_seg.pb'
-PREDICT_NET = '/home/neher/Projects/caffe2_networks/predict_net_seg.pb'
+INIT_NET = '/path/to/init_net.pb'
+PREDICT_NET = '/path/to/predict_net.pb'
 device_opts = core.DeviceOption(caffe2_pb2.CUDA, 0) # change to 'core.DeviceOption(caffe2_pb2.CPU, 0)' for CPU processing
 
 train(INIT_NET, PREDICT_NET, epochs=100, batch_size=100, device_opts=device_opts)
