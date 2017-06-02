@@ -93,42 +93,6 @@ def create_unet_model(m, device_opts, is_test) :
 
         return output_segmentation
 
-# create actual network structure
-def create_minimal_model(m, device_opts, is_test):
-
-    base_n_filters = 16
-    kernel_size = 3
-    pad = (kernel_size - 1) / 2
-    do_dropout = True
-    num_output_channels = 3
-
-    weight_init = ("MSRAFill", {})
-
-    with core.DeviceScope(device_opts):
-        contr_1_1 = brew.conv(m, 'data', 'contr_1_1', dim_in=1, dim_out=base_n_filters, kernel=kernel_size, pad=pad, weight_init=weight_init)
-        pool1 = brew.max_pool(m, contr_1_1, 'pool1', kernel=2, stride=2)
-
-        contr_2_1 = brew.conv(m, pool1, 'contr_2_1', dim_in=base_n_filters, dim_out=base_n_filters * 2, kernel=kernel_size, pad=pad, weight_init=weight_init)
-        pool2 = brew.max_pool(m, contr_2_1, 'pool2', kernel=2, stride=2)
-
-        contr_3_1 = brew.conv(m, pool2, 'contr_3_1', dim_in=base_n_filters * 2, dim_out=base_n_filters * 4, kernel=kernel_size, pad=pad, weight_init=weight_init)
-
-        expand_7_1 = brew.conv(m, contr_3_1, 'expand_7_1', dim_in=base_n_filters * 4, dim_out=base_n_filters * 2, kernel=kernel_size, pad=pad, weight_init=weight_init)
-        upscale7 = brew.conv_transpose(m, expand_7_1, 'upscale7', dim_in=base_n_filters * 2, dim_out=base_n_filters * 2, kernel=2, stride=2, weight_init=weight_init)
-
-        expand_8_1 = brew.conv(m, upscale7, 'expand_8_1', dim_in=base_n_filters * 2, dim_out=base_n_filters * 2, kernel=kernel_size, pad=pad, weight_init=weight_init)
-        upscale8 = brew.conv_transpose(m, expand_8_1, 'upscale8', dim_in=base_n_filters * 2, dim_out=base_n_filters * 2, kernel=2, stride=2, weight_init=weight_init)
-
-        expand_9_1 = brew.conv(m, upscale8, 'expand_9_1', dim_in=base_n_filters * 3, dim_out=base_n_filters, kernel=kernel_size, pad=pad, weight_init=weight_init)
-
-        output_segmentation = brew.conv(m, expand_9_1, 'output_segmentation', dim_in=base_n_filters, dim_out=num_output_channels, kernel=1, pad=0, stride=1, weight_init=weight_init)
-        m.net.AddExternalOutput(output_segmentation)
-
-        output_sigmoid = m.Sigmoid(output_segmentation, 'output_sigmoid')
-        m.net.AddExternalOutput(output_sigmoid)
-
-        return output_segmentation
-
 # add loss and optimizer
 def add_training_operators(output_segmentation, model, device_opts) :
 
