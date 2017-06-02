@@ -1,41 +1,49 @@
 __author__ = "Peter F. Neher"
-# Minimal example for segmentation using Caffe2 including training, testing, saving and loading of networks
+# Simple example for segmentation (U-Net) using Caffe2 including training, testing, saving and loading of networks
 
 import numpy as np
 from caffe2.python import workspace, core, model_helper, brew, optimizer, utils
 from caffe2.proto import caffe2_pb2
 import matplotlib.pyplot as plt
 
-# randomly creates ...
+# randomly creates segmentation images with noise + ground truth
 def get_data(batchsize, numsq=1) :
     data = []
     gt_segmentation = []
     sz = 64
+    classes = 3
     for i in range(batchsize) :
-        d = np.zeros((1,sz,sz))
+        l = np.zeros((sz,sz,classes))
+        if classes>1 :
+            l[:,:,0] = 1
         for i in range(np.random.randint(0,numsq+1)) :
             s = np.random.randint(5, 20)
             x = np.random.randint(0, sz-s)
             y = np.random.randint(0, sz-s)
-            d[0,x:x+s,y:y+s] = 1
-        data.append(d)
-        gt_segmentation.append(np.copy(d))
+            l[x:x+s,y:y+s,0] = 0
+
+            c = np.random.randint(1, classes)
+            l[x:x+s,y:y+s,c] = 1
+
+        noise = np.random.normal(0, 0.004, (sz,sz,classes))
+        data.append(np.copy(l)+noise)
+        gt_segmentation.append(l)
     return np.array(data).astype('float32'), np.array(gt_segmentation).astype('float32')
 
 # create actual network structure (here U-net, Ronneberger et al.)
-def create_model(m, device_opts, is_test) :
+def create_unet_model(m, device_opts, is_test) :
 
-    base_n_filters = 2
+    base_n_filters = 16
     kernel_size = 3
     pad = (kernel_size-1)/2
     do_dropout = True
-    num_output_channels = 1
+    num_classes = 3
 
     weight_init=("MSRAFill", {})
 
     with core.DeviceScope(device_opts):
 
-        contr_1_1 = brew.spatial_bn(m, brew.relu(m, brew.conv(m, 'data', 'conv_1_1', dim_in=1, dim_out=base_n_filters, kernel=kernel_size, pad=pad, weight_init=weight_init), 'nonl_1_1'), 'contr_1_1', dim_in=base_n_filters, epsilon=1e-3, momentum=0.1, is_test=is_test)
+        contr_1_1 = brew.spatial_bn(m, brew.relu(m, brew.conv(m, 'data', 'conv_1_1', dim_in=num_classes, dim_out=base_n_filters, kernel=kernel_size, pad=pad, weight_init=weight_init), 'nonl_1_1'), 'contr_1_1', dim_in=base_n_filters, epsilon=1e-3, momentum=0.1, is_test=is_test)
         contr_1_2 = brew.spatial_bn(m, brew.relu(m, brew.conv(m, contr_1_1, 'conv_1_2', dim_in=base_n_filters, dim_out=base_n_filters, kernel=kernel_size, pad=pad, weight_init=weight_init), 'nonl_1_2'), 'contr_1_2', dim_in=base_n_filters, epsilon=1e-3, momentum=0.1, is_test=is_test)
         pool1 = brew.max_pool(m, contr_1_2, 'pool1', kernel=2, stride=2)
 
@@ -77,8 +85,47 @@ def create_model(m, device_opts, is_test) :
         expand_9_1 = brew.spatial_bn(m, brew.relu(m, brew.conv(m, concat9, 'conv_9_1', dim_in=base_n_filters * 3, dim_out=base_n_filters, kernel=kernel_size, pad=pad, weight_init=weight_init), 'nonl_9_1'), 'expand_9_1', dim_in=base_n_filters, epsilon=1e-3, momentum=0.1, is_test=is_test)
         expand_9_2 = brew.spatial_bn(m, brew.relu(m, brew.conv(m, expand_9_1, 'conv_9_2', dim_in=base_n_filters, dim_out=base_n_filters, kernel=kernel_size, pad=pad, weight_init=weight_init), 'nonl_9_2'), 'expand_9_2', dim_in=base_n_filters, epsilon=1e-3, momentum=0.1, is_test=is_test)
 
-        output_segmentation = brew.conv(m, expand_9_2, 'output_segmentation', dim_in=base_n_filters, dim_out=num_output_channels, kernel=1, pad=0, stride=1, weight_init=weight_init)
+        output_segmentation = brew.conv(m, expand_9_2, 'output_segmentation', dim_in=base_n_filters, dim_out=num_classes, kernel=1, pad=0, stride=1, weight_init=weight_init)
         m.net.AddExternalOutput(output_segmentation)
+
+        output_sigmoid = m.Sigmoid(output_segmentation, 'output_sigmoid')
+        m.net.AddExternalOutput(output_sigmoid)
+
+        return output_segmentation
+
+# create actual network structure
+def create_minimal_model(m, device_opts, is_test):
+
+    base_n_filters = 16
+    kernel_size = 3
+    pad = (kernel_size - 1) / 2
+    do_dropout = True
+    num_output_channels = 3
+
+    weight_init = ("MSRAFill", {})
+
+    with core.DeviceScope(device_opts):
+        contr_1_1 = brew.conv(m, 'data', 'contr_1_1', dim_in=1, dim_out=base_n_filters, kernel=kernel_size, pad=pad, weight_init=weight_init)
+        pool1 = brew.max_pool(m, contr_1_1, 'pool1', kernel=2, stride=2)
+
+        contr_2_1 = brew.conv(m, pool1, 'contr_2_1', dim_in=base_n_filters, dim_out=base_n_filters * 2, kernel=kernel_size, pad=pad, weight_init=weight_init)
+        pool2 = brew.max_pool(m, contr_2_1, 'pool2', kernel=2, stride=2)
+
+        contr_3_1 = brew.conv(m, pool2, 'contr_3_1', dim_in=base_n_filters * 2, dim_out=base_n_filters * 4, kernel=kernel_size, pad=pad, weight_init=weight_init)
+
+        expand_7_1 = brew.conv(m, contr_3_1, 'expand_7_1', dim_in=base_n_filters * 4, dim_out=base_n_filters * 2, kernel=kernel_size, pad=pad, weight_init=weight_init)
+        upscale7 = brew.conv_transpose(m, expand_7_1, 'upscale7', dim_in=base_n_filters * 2, dim_out=base_n_filters * 2, kernel=2, stride=2, weight_init=weight_init)
+
+        expand_8_1 = brew.conv(m, upscale7, 'expand_8_1', dim_in=base_n_filters * 2, dim_out=base_n_filters * 2, kernel=kernel_size, pad=pad, weight_init=weight_init)
+        upscale8 = brew.conv_transpose(m, expand_8_1, 'upscale8', dim_in=base_n_filters * 2, dim_out=base_n_filters * 2, kernel=2, stride=2, weight_init=weight_init)
+
+        expand_9_1 = brew.conv(m, upscale8, 'expand_9_1', dim_in=base_n_filters * 3, dim_out=base_n_filters, kernel=kernel_size, pad=pad, weight_init=weight_init)
+
+        output_segmentation = brew.conv(m, expand_9_1, 'output_segmentation', dim_in=base_n_filters, dim_out=num_output_channels, kernel=1, pad=0, stride=1, weight_init=weight_init)
+        m.net.AddExternalOutput(output_segmentation)
+
+        output_sigmoid = m.Sigmoid(output_segmentation, 'output_sigmoid')
+        m.net.AddExternalOutput(output_sigmoid)
 
         return output_segmentation
 
@@ -86,10 +133,10 @@ def create_model(m, device_opts, is_test) :
 def add_training_operators(output_segmentation, model, device_opts) :
 
     with core.DeviceScope(device_opts):
-        loss = model.SigmoidCrossEntropyWithLogits([output_segmentation, "gt_segmentation"], 'loss') # currently the only segmentation loss in Caffe2?
+        loss = model.SigmoidCrossEntropyWithLogits([output_segmentation, "gt_segmentation"], 'loss')
         avg_loss = model.AveragedLoss(loss, "avg_loss")
-        model.AddGradientOperators([avg_loss])
-        opt = optimizer.build_adam(model, base_learning_rate=0.001)
+        model.AddGradientOperators([loss])
+        opt = optimizer.build_adam(model, base_learning_rate=0.01)
 
 def train(INIT_NET, PREDICT_NET, epochs, batch_size, device_opts) :
 
@@ -97,8 +144,8 @@ def train(INIT_NET, PREDICT_NET, epochs, batch_size, device_opts) :
     workspace.FeedBlob("data", data, device_option=device_opts)
     workspace.FeedBlob("gt_segmentation", gt_segmentation, device_option=device_opts)
 
-    train_model= model_helper.ModelHelper(name="train_net")
-    output_segmentation = create_model(train_model, device_opts=device_opts, is_test=0)
+    train_model= model_helper.ModelHelper(name="train_net", arg_scope = {"order": "NHWC"})
+    output_segmentation = create_unet_model(train_model, device_opts=device_opts, is_test=0)
     add_training_operators(output_segmentation, train_model, device_opts=device_opts)
     with core.DeviceScope(device_opts):
         brew.add_weight_decay(train_model, 0.001)
@@ -113,12 +160,12 @@ def train(INIT_NET, PREDICT_NET, epochs, batch_size, device_opts) :
         workspace.FeedBlob("data", data, device_option=device_opts)
         workspace.FeedBlob("gt_segmentation", gt_segmentation, device_option=device_opts)
 
-        workspace.RunNet(train_model.net, 10)   # run for 10 times
+        workspace.RunNet(train_model.net, 1)   # run for 10 times
         print str(j) + ': ' + str(workspace.FetchBlob("avg_loss"))
 
     print 'training done'
-    test_model= model_helper.ModelHelper(name="test_net", init_params=False)
-    create_model(test_model, device_opts=device_opts, is_test=1)
+    test_model= model_helper.ModelHelper(name="test_net", arg_scope = {"order": "NHWC"}, init_params=False)
+    create_unet_model(test_model, device_opts=device_opts, is_test=1)
     workspace.RunNetOnce(test_model.param_init_net)
     workspace.CreateNet(test_model.net, overwrite=True)
 
@@ -154,30 +201,32 @@ def load_net(INIT_NET, PREDICT_NET, device_opts):
         net_def.device_option.CopyFrom(device_opts)
         workspace.CreateNet(net_def.SerializeToString(), overwrite=True)
 
-INIT_NET = '/path/to/init_net.pb'
-PREDICT_NET = '/path/to/predict_net.pb'
+INIT_NET = '/home/neher/Projects/caffe2_networks/init_net_seg.pb'
+PREDICT_NET = '/home/neher/Projects/caffe2_networks/predict_net_seg.pb'
 device_opts = core.DeviceOption(caffe2_pb2.CUDA, 0) # change to 'core.DeviceOption(caffe2_pb2.CPU, 0)' for CPU processing
 
 train(INIT_NET, PREDICT_NET, epochs=100, batch_size=100, device_opts=device_opts)
 
 print '\n********************************************'
 print 'loading test model'
-# Problems loading batch-norm layer (SpatialBN) here when loading network withour running training beforehand!
+# Problems loading batch-norm layer (SpatialBN) here!
 load_net(INIT_NET, PREDICT_NET, device_opts=device_opts)
 
 while True :
     data, gt_segmentation = get_data(1, 4)
     workspace.FeedBlob("data", data, device_option=device_opts)
     workspace.RunNet('test_net', 1)
-    out1 = workspace.FetchBlob("output_segmentation")
-    out2 = np.copy(out1)
-    out2[out2>0] = 1
-    out2[out2<=0] = 0
+    out1 = workspace.FetchBlob("output_sigmoid")
 
-    plt.subplot(311)
-    plt.imshow(data[0, 0, :, :])
-    plt.subplot(312)
-    plt.imshow(out1[0, 0, :, :])
-    plt.subplot(313)
-    plt.imshow(out2[0, 0, :, :])
+    fig, sub = plt.subplots(ncols=3, figsize=(15, 5))
+
+    sub[0].set_title('Input')
+    sub[0].imshow(data[0,:,:,:])
+
+    sub[1].set_title('Ground Truth')
+    sub[1].imshow(gt_segmentation[0,:,:,:])
+
+    sub[2].set_title('Segmentation')
+    sub[2].imshow(out1[0, :, :, :])
+
     plt.show()
