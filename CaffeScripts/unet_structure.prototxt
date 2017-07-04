@@ -4,7 +4,7 @@ layer {
   top: "data"
   input_param {
     shape {
-      dim: 16
+      dim: 32
       dim: 1
       dim: 64
       dim: 64
@@ -20,20 +20,20 @@ layer {
   }
   input_param {
     shape {
-      dim: 16
-      dim: 1
+      dim: 32
+      dim: 2
       dim: 64
       dim: 64
     }
   }
 }
 layer {
-  name: "Convolution1"
+  name: "contr_1_1"
   type: "Convolution"
   bottom: "data"
-  top: "Convolution1"
+  top: "contr_1_1"
   convolution_param {
-    num_output: 8
+    num_output: 32
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -44,22 +44,16 @@ layer {
 layer {
   name: "ReLU1"
   type: "ReLU"
-  bottom: "Convolution1"
-  top: "Convolution1"
+  bottom: "contr_1_1"
+  top: "contr_1_1"
 }
 layer {
-  name: "contr_1_1"
-  type: "BatchNorm"
-  bottom: "Convolution1"
-  top: "Convolution1"
-}
-layer {
-  name: "Convolution2"
+  name: "contr_1_2"
   type: "Convolution"
-  bottom: "Convolution1"
-  top: "Convolution2"
+  bottom: "contr_1_1"
+  top: "contr_1_2"
   convolution_param {
-    num_output: 8
+    num_output: 32
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -70,19 +64,13 @@ layer {
 layer {
   name: "ReLU2"
   type: "ReLU"
-  bottom: "Convolution2"
-  top: "Convolution2"
-}
-layer {
-  name: "contr_1_2"
-  type: "BatchNorm"
-  bottom: "Convolution2"
-  top: "Convolution2"
+  bottom: "contr_1_2"
+  top: "contr_1_2"
 }
 layer {
   name: "pool_1"
   type: "Pooling"
-  bottom: "Convolution2"
+  bottom: "contr_1_2"
   top: "pool_1"
   pooling_param {
     pool: MAX
@@ -91,12 +79,12 @@ layer {
   }
 }
 layer {
-  name: "Convolution3"
+  name: "contr_2_1"
   type: "Convolution"
   bottom: "pool_1"
-  top: "Convolution3"
+  top: "contr_2_1"
   convolution_param {
-    num_output: 16
+    num_output: 64
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -107,22 +95,16 @@ layer {
 layer {
   name: "ReLU3"
   type: "ReLU"
-  bottom: "Convolution3"
-  top: "Convolution3"
+  bottom: "contr_2_1"
+  top: "contr_2_1"
 }
 layer {
-  name: "contr_2_1"
-  type: "BatchNorm"
-  bottom: "Convolution3"
-  top: "Convolution3"
-}
-layer {
-  name: "Convolution4"
+  name: "contr_2_2"
   type: "Convolution"
-  bottom: "Convolution3"
-  top: "Convolution4"
+  bottom: "contr_2_1"
+  top: "contr_2_2"
   convolution_param {
-    num_output: 16
+    num_output: 64
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -133,19 +115,13 @@ layer {
 layer {
   name: "ReLU4"
   type: "ReLU"
-  bottom: "Convolution4"
-  top: "Convolution4"
-}
-layer {
-  name: "contr_2_2"
-  type: "BatchNorm"
-  bottom: "Convolution4"
-  top: "Convolution4"
+  bottom: "contr_2_2"
+  top: "contr_2_2"
 }
 layer {
   name: "pool_2"
   type: "Pooling"
-  bottom: "Convolution4"
+  bottom: "contr_2_2"
   top: "pool_2"
   pooling_param {
     pool: MAX
@@ -154,12 +130,12 @@ layer {
   }
 }
 layer {
-  name: "Convolution5"
+  name: "contr_3_1"
   type: "Convolution"
   bottom: "pool_2"
-  top: "Convolution5"
+  top: "contr_3_1"
   convolution_param {
-    num_output: 32
+    num_output: 128
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -170,22 +146,16 @@ layer {
 layer {
   name: "ReLU5"
   type: "ReLU"
-  bottom: "Convolution5"
-  top: "Convolution5"
+  bottom: "contr_3_1"
+  top: "contr_3_1"
 }
 layer {
-  name: "contr_3_1"
-  type: "BatchNorm"
-  bottom: "Convolution5"
-  top: "Convolution5"
-}
-layer {
-  name: "Convolution6"
+  name: "contr_3_2"
   type: "Convolution"
-  bottom: "Convolution5"
-  top: "Convolution6"
+  bottom: "contr_3_1"
+  top: "contr_3_2"
   convolution_param {
-    num_output: 32
+    num_output: 128
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -196,19 +166,13 @@ layer {
 layer {
   name: "ReLU6"
   type: "ReLU"
-  bottom: "Convolution6"
-  top: "Convolution6"
-}
-layer {
-  name: "contr_3_2"
-  type: "BatchNorm"
-  bottom: "Convolution6"
-  top: "Convolution6"
+  bottom: "contr_3_2"
+  top: "contr_3_2"
 }
 layer {
   name: "pool_3"
   type: "Pooling"
-  bottom: "Convolution6"
+  bottom: "contr_3_2"
   top: "pool_3"
   pooling_param {
     pool: MAX
@@ -217,12 +181,12 @@ layer {
   }
 }
 layer {
-  name: "Convolution7"
+  name: "contr_4_1"
   type: "Convolution"
   bottom: "pool_3"
-  top: "Convolution7"
+  top: "contr_4_1"
   convolution_param {
-    num_output: 64
+    num_output: 256
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -233,22 +197,16 @@ layer {
 layer {
   name: "ReLU7"
   type: "ReLU"
-  bottom: "Convolution7"
-  top: "Convolution7"
+  bottom: "contr_4_1"
+  top: "contr_4_1"
 }
 layer {
-  name: "contr_4_1"
-  type: "BatchNorm"
-  bottom: "Convolution7"
-  top: "Convolution7"
-}
-layer {
-  name: "Convolution8"
+  name: "contr_4_2"
   type: "Convolution"
-  bottom: "Convolution7"
-  top: "Convolution8"
+  bottom: "contr_4_1"
+  top: "contr_4_2"
   convolution_param {
-    num_output: 64
+    num_output: 256
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -259,20 +217,14 @@ layer {
 layer {
   name: "ReLU8"
   type: "ReLU"
-  bottom: "Convolution8"
-  top: "Convolution8"
+  bottom: "contr_4_2"
+  top: "contr_4_2"
 }
 layer {
-  name: "contr_4_2"
-  type: "BatchNorm"
-  bottom: "Convolution8"
-  top: "Convolution8"
-}
-layer {
-  name: "Pooling1"
+  name: "pool_4"
   type: "Pooling"
-  bottom: "Convolution8"
-  top: "Pooling1"
+  bottom: "contr_4_2"
+  top: "pool_4"
   pooling_param {
     pool: MAX
     kernel_size: 2
@@ -280,21 +232,21 @@ layer {
   }
 }
 layer {
-  name: "pool_4"
+  name: "Dropout1"
   type: "Dropout"
-  bottom: "Pooling1"
-  top: "Pooling1"
+  bottom: "pool_4"
+  top: "pool_4"
   dropout_param {
     dropout_ratio: 0.4
   }
 }
 layer {
-  name: "Convolution9"
+  name: "encode_1"
   type: "Convolution"
-  bottom: "Pooling1"
-  top: "Convolution9"
+  bottom: "pool_4"
+  top: "encode_1"
   convolution_param {
-    num_output: 128
+    num_output: 512
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -305,22 +257,16 @@ layer {
 layer {
   name: "ReLU9"
   type: "ReLU"
-  bottom: "Convolution9"
-  top: "Convolution9"
+  bottom: "encode_1"
+  top: "encode_1"
 }
 layer {
-  name: "encode_1"
-  type: "BatchNorm"
-  bottom: "Convolution9"
-  top: "Convolution9"
-}
-layer {
-  name: "Convolution10"
+  name: "encode_2"
   type: "Convolution"
-  bottom: "Convolution9"
-  top: "Convolution10"
+  bottom: "encode_1"
+  top: "encode_2"
   convolution_param {
-    num_output: 128
+    num_output: 512
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -331,43 +277,47 @@ layer {
 layer {
   name: "ReLU10"
   type: "ReLU"
-  bottom: "Convolution10"
-  top: "Convolution10"
+  bottom: "encode_2"
+  top: "encode_2"
 }
 layer {
-  name: "encode_2"
-  type: "BatchNorm"
-  bottom: "Convolution10"
-  top: "Convolution10"
-}
-layer {
-  name: "upscale_1"
+  name: "upscale_4"
   type: "Deconvolution"
-  bottom: "Convolution10"
-  top: "upscale_1"
+  bottom: "encode_2"
+  top: "upscale_4"
+  param {
+    lr_mult: 0
+    decay_mult: 0
+  }
   convolution_param {
-    num_output: 128
+    num_output: 512
+    bias_term: false
     kernel_size: 2
+    group: 512
     stride: 2
+    weight_filler {
+      type: "constant"
+      value: 1
+    }
   }
 }
 layer {
-  name: "concat_1"
+  name: "concat_4"
   type: "Concat"
-  bottom: "upscale_1"
-  bottom: "Convolution8"
-  top: "concat_1"
+  bottom: "upscale_4"
+  bottom: "contr_4_2"
+  top: "concat_4"
   concat_param {
     axis: 1
   }
 }
 layer {
-  name: "Convolution11"
+  name: "expand_4_1"
   type: "Convolution"
-  bottom: "concat_1"
-  top: "Convolution11"
+  bottom: "concat_4"
+  top: "expand_4_1"
   convolution_param {
-    num_output: 64
+    num_output: 256
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -378,22 +328,16 @@ layer {
 layer {
   name: "ReLU11"
   type: "ReLU"
-  bottom: "Convolution11"
-  top: "Convolution11"
+  bottom: "expand_4_1"
+  top: "expand_4_1"
 }
 layer {
-  name: "expand_1_1"
-  type: "BatchNorm"
-  bottom: "Convolution11"
-  top: "Convolution11"
-}
-layer {
-  name: "Convolution12"
+  name: "expand_4_2"
   type: "Convolution"
-  bottom: "Convolution11"
-  top: "Convolution12"
+  bottom: "expand_4_1"
+  top: "expand_4_2"
   convolution_param {
-    num_output: 64
+    num_output: 256
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -404,43 +348,47 @@ layer {
 layer {
   name: "ReLU12"
   type: "ReLU"
-  bottom: "Convolution12"
-  top: "Convolution12"
+  bottom: "expand_4_2"
+  top: "expand_4_2"
 }
 layer {
-  name: "expand_1_2"
-  type: "BatchNorm"
-  bottom: "Convolution12"
-  top: "Convolution12"
-}
-layer {
-  name: "upscale_2"
+  name: "upscale_3"
   type: "Deconvolution"
-  bottom: "Convolution12"
-  top: "upscale_2"
+  bottom: "expand_4_2"
+  top: "upscale_3"
+  param {
+    lr_mult: 0
+    decay_mult: 0
+  }
   convolution_param {
-    num_output: 64
+    num_output: 256
+    bias_term: false
     kernel_size: 2
+    group: 256
     stride: 2
+    weight_filler {
+      type: "constant"
+      value: 1
+    }
   }
 }
 layer {
-  name: "concat_2"
+  name: "concat_3"
   type: "Concat"
-  bottom: "upscale_2"
-  bottom: "Convolution6"
-  top: "concat_2"
+  bottom: "upscale_3"
+  bottom: "contr_3_2"
+  top: "concat_3"
   concat_param {
     axis: 1
   }
 }
 layer {
-  name: "Convolution13"
+  name: "expand_3_1"
   type: "Convolution"
-  bottom: "concat_2"
-  top: "Convolution13"
+  bottom: "concat_3"
+  top: "expand_3_1"
   convolution_param {
-    num_output: 32
+    num_output: 128
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -451,22 +399,16 @@ layer {
 layer {
   name: "ReLU13"
   type: "ReLU"
-  bottom: "Convolution13"
-  top: "Convolution13"
+  bottom: "expand_3_1"
+  top: "expand_3_1"
 }
 layer {
-  name: "expand_2_1"
-  type: "BatchNorm"
-  bottom: "Convolution13"
-  top: "Convolution13"
-}
-layer {
-  name: "Convolution14"
+  name: "expand_3_2"
   type: "Convolution"
-  bottom: "Convolution13"
-  top: "Convolution14"
+  bottom: "expand_3_1"
+  top: "expand_3_2"
   convolution_param {
-    num_output: 32
+    num_output: 128
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -477,43 +419,47 @@ layer {
 layer {
   name: "ReLU14"
   type: "ReLU"
-  bottom: "Convolution14"
-  top: "Convolution14"
+  bottom: "expand_3_2"
+  top: "expand_3_2"
 }
 layer {
-  name: "expand_2_2"
-  type: "BatchNorm"
-  bottom: "Convolution14"
-  top: "Convolution14"
-}
-layer {
-  name: "upscale_3"
+  name: "upscale_2"
   type: "Deconvolution"
-  bottom: "Convolution14"
-  top: "upscale_3"
+  bottom: "expand_3_2"
+  top: "upscale_2"
+  param {
+    lr_mult: 0
+    decay_mult: 0
+  }
   convolution_param {
-    num_output: 32
+    num_output: 128
+    bias_term: false
     kernel_size: 2
+    group: 128
     stride: 2
+    weight_filler {
+      type: "constant"
+      value: 1
+    }
   }
 }
 layer {
-  name: "concat_3"
+  name: "concat_2"
   type: "Concat"
-  bottom: "upscale_3"
-  bottom: "Convolution4"
-  top: "concat_3"
+  bottom: "upscale_2"
+  bottom: "contr_2_2"
+  top: "concat_2"
   concat_param {
     axis: 1
   }
 }
 layer {
-  name: "Convolution15"
+  name: "expand_2_1"
   type: "Convolution"
-  bottom: "concat_3"
-  top: "Convolution15"
+  bottom: "concat_2"
+  top: "expand_2_1"
   convolution_param {
-    num_output: 16
+    num_output: 64
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -524,22 +470,16 @@ layer {
 layer {
   name: "ReLU15"
   type: "ReLU"
-  bottom: "Convolution15"
-  top: "Convolution15"
+  bottom: "expand_2_1"
+  top: "expand_2_1"
 }
 layer {
-  name: "expand_3_1"
-  type: "BatchNorm"
-  bottom: "Convolution15"
-  top: "Convolution15"
-}
-layer {
-  name: "Convolution16"
+  name: "expand_2_2"
   type: "Convolution"
-  bottom: "Convolution15"
-  top: "Convolution16"
+  bottom: "expand_2_1"
+  top: "expand_2_2"
   convolution_param {
-    num_output: 16
+    num_output: 64
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -550,43 +490,47 @@ layer {
 layer {
   name: "ReLU16"
   type: "ReLU"
-  bottom: "Convolution16"
-  top: "Convolution16"
+  bottom: "expand_2_2"
+  top: "expand_2_2"
 }
 layer {
-  name: "expand_3_2"
-  type: "BatchNorm"
-  bottom: "Convolution16"
-  top: "Convolution16"
-}
-layer {
-  name: "upscale_4"
+  name: "upscale_1"
   type: "Deconvolution"
-  bottom: "Convolution16"
-  top: "upscale_4"
+  bottom: "expand_2_2"
+  top: "upscale_1"
+  param {
+    lr_mult: 0
+    decay_mult: 0
+  }
   convolution_param {
-    num_output: 16
+    num_output: 64
+    bias_term: false
     kernel_size: 2
+    group: 64
     stride: 2
+    weight_filler {
+      type: "constant"
+      value: 1
+    }
   }
 }
 layer {
-  name: "concat_4"
+  name: "concat_1"
   type: "Concat"
-  bottom: "upscale_4"
-  bottom: "Convolution2"
-  top: "concat_4"
+  bottom: "upscale_1"
+  bottom: "contr_1_2"
+  top: "concat_1"
   concat_param {
     axis: 1
   }
 }
 layer {
-  name: "Convolution17"
+  name: "expand_1_1"
   type: "Convolution"
-  bottom: "concat_4"
-  top: "Convolution17"
+  bottom: "concat_1"
+  top: "expand_1_1"
   convolution_param {
-    num_output: 8
+    num_output: 32
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -597,22 +541,16 @@ layer {
 layer {
   name: "ReLU17"
   type: "ReLU"
-  bottom: "Convolution17"
-  top: "Convolution17"
+  bottom: "expand_1_1"
+  top: "expand_1_1"
 }
 layer {
-  name: "expand_4_1"
-  type: "BatchNorm"
-  bottom: "Convolution17"
-  top: "Convolution17"
-}
-layer {
-  name: "Convolution18"
+  name: "expand_1_2"
   type: "Convolution"
-  bottom: "Convolution17"
-  top: "Convolution18"
+  bottom: "expand_1_1"
+  top: "expand_1_2"
   convolution_param {
-    num_output: 8
+    num_output: 32
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -623,22 +561,16 @@ layer {
 layer {
   name: "ReLU18"
   type: "ReLU"
-  bottom: "Convolution18"
-  top: "Convolution18"
-}
-layer {
-  name: "expand_4_2"
-  type: "BatchNorm"
-  bottom: "Convolution18"
-  top: "Convolution18"
+  bottom: "expand_1_2"
+  top: "expand_1_2"
 }
 layer {
   name: "seg"
   type: "Convolution"
-  bottom: "Convolution18"
+  bottom: "expand_1_2"
   top: "seg"
   convolution_param {
-    num_output: 3
+    num_output: 2
     pad: 0
     kernel_size: 1
     weight_filler {
@@ -651,17 +583,31 @@ layer {
   type: "Softmax"
   bottom: "seg"
   top: "softmax"
-  include {
-    phase: TEST
-  }
 }
 layer {
   name: "argmax"
   type: "ArgMax"
   bottom: "softmax"
   top: "argmax"
+  argmax_param {
+    axis: 1
+  }
+}
+layer {
+  name: "silence"
+  type: "Silence"
+  bottom: "argmax"
   include {
-    phase: TEST
+    phase: TRAIN
+  }
+}
+layer {
+  name: "target_argmax"
+  type: "ArgMax"
+  bottom: "target"
+  top: "target_argmax"
+  exclude {
+    stage: "deploy"
   }
   argmax_param {
     axis: 1
@@ -671,19 +617,34 @@ layer {
   name: "loss"
   type: "SoftmaxWithLoss"
   bottom: "seg"
-  bottom: "target"
+  bottom: "target_argmax"
   top: "loss"
-  include {
-    phase: TRAIN
+  exclude {
+    stage: "deploy"
   }
 }
 layer {
   name: "accuracy"
   type: "Accuracy"
   bottom: "seg"
-  bottom: "target"
+  bottom: "target_argmax"
   top: "accuracy"
   exclude {
     stage: "deploy"
+  }
+}
+layer {
+  name: "dice"
+  type: "Python"
+  bottom: "softmax"
+  bottom: "target"
+  top: "dice"
+  loss_weight: 1
+  exclude {
+    stage: "deploy"
+  }
+  python_param {
+    module: "DiceIndex"
+    layer: "DiceIndexLayer"
   }
 }
