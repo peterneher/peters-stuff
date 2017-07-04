@@ -1,3 +1,5 @@
+__author__ = "Peter F. Neher"
+
 import numpy as np
 import caffe
 from caffe import layers as L

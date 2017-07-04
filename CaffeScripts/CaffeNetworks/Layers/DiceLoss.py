@@ -1,3 +1,5 @@
+__author__ = "Peter F. Neher"
+
 import caffe
 import numpy as np
 import theano
